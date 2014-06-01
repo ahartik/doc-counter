@@ -7,3 +7,6 @@
 [submodule "gtest"]
 	path = gtest
 	url = https://github.com/smarr/googletest
+[submodule "gflags"]
+	path = gflags
+	url = https://github.com/schuhschuh/gflags

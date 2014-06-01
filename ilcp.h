@@ -27,7 +27,7 @@ class ILCP {
         start = i;
       }
     }
-    for (size_t i = 0; i <= length; ++i) {
+    for (Index i = 0; i <= length; ++i) {
       ilcp[i] = text_lcp[sa.sa(i)];
     }
 

@@ -84,11 +84,11 @@ std::vector<std::string> split(const std::string &s, char delim) {
 }
 
 int main(int argc, char** argv) {
-  google::SetUsageMessage(
+  gflags::SetUsageMessage(
     "usage: ./doc_counter --structures struct1,struct2 --pattern_file pattern "
     " --document_file documents"
       );
-  google::ParseCommandLineFlags(&argc, &argv, false);
+  gflags::ParseCommandLineFlags(&argc, &argv, false);
   bool success = true;
   if (FLAGS_pattern_file.empty()) {
     std::cerr << "--pattern_file must be defined\n";
@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
     success = false;
   }
   if (!success) {
-    std::cerr << google::ProgramUsage() << std::endl;
+    std::cerr << gflags::ProgramUsage() << std::endl;
     return 1;
   }
   // Read text

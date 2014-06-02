@@ -12,7 +12,7 @@ To build:
 
 $ cmake .
 
-$ make -j
+$ make
 
 
 Running

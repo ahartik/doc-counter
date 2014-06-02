@@ -24,7 +24,12 @@ $ doc_counter --structures brute,rle_skewed,rle,skewed,balanced,rle_rrr,rle_skew
 Structures
 =========================
 Structures implemented are:
-  brute - bruteforce counting for verifying results
-  balanced - normal, balanced wavelet tree
-  skewed - skewed wavelet tree
-  ,rle_skewed,rle,skewed,balanced,rle_rrr,rle_skewed_rrr
+  * brute - bruteforce counting for verifying results
+  * balanced - normal, balanced wavelet tree
+  * skewed - skewed wavelet tree
+  * rle - run-length encoded wavelet tree
+  * rle_skewed - rle wavelet built on skewed tree
+  * balanced_rrr - like 'balanced', but uses RRR bitvectors
+  * skewed_rrr - like 'skewed', but uses RRR bitvectors
+  * rle_rrr - like 'rle', but uses RRR bitvectors
+  * rle_skewed_rrr - like 'rle_skewed', but uses RRR bitvectors

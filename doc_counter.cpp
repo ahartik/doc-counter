@@ -19,7 +19,8 @@
 
 DEFINE_string(structures, "balanced",
               "Comma-separated list of tested structures. Available structures"
-              ": balanced,skewed,rle,rle_skewed,brute"
+              ": brute,balanced,skewed,rle,rle_skewed,balanced_rrr,skewed_rrr,"
+              "rle_rrr,rle_skewed_rrr"
               );
 
 DEFINE_string(pattern_file, "",
@@ -125,10 +126,18 @@ int main(int argc, char** argv) {
     structFuncs;
 
   structFuncs["brute"] = &countPatterns<BruteCount>;
-  structFuncs["skewed"] = &countPatterns<ILCP<SkewedWavelet<>>>;
-  structFuncs["balanced"] = &countPatterns<ILCP<BalancedWavelet<>>>;
-  structFuncs["rle"] = &countPatterns<ILCP<RLEWavelet<BalancedWavelet<>>>>;
-  structFuncs["rle_skewed"] = &countPatterns<ILCP<RLEWavelet<SkewedWavelet<>>>>;
+  structFuncs["skewed"] = &countPatterns<ILCP<
+      SkewedWavelet<>>>;
+  structFuncs["balanced"] = &countPatterns<ILCP<
+      BalancedWavelet<>>>;
+  structFuncs["rle"] = &countPatterns<ILCP<
+      RLEWavelet<BalancedWavelet<>>>>;
+  structFuncs["rle_skewed"] = &countPatterns<ILCP<
+      RLEWavelet<SkewedWavelet<>>>>;
+  structFuncs["skewed_rrr"] = &countPatterns<ILCP<
+      SkewedWavelet<RRRBitVector>>>;
+  structFuncs["balanced_rrr"] = &countPatterns<ILCP<
+      BalancedWavelet<RRRBitVector>>>;
   structFuncs["rle_rrr"] = &countPatterns<ILCP<
       RLEWavelet<BalancedWavelet<RRRBitVector>>>>;
   structFuncs["rle_skewed_rrr"] = &countPatterns<ILCP<

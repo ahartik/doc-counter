@@ -6,6 +6,7 @@ ADD_DEFINITIONS(
       -O3
       -std=c++0x # Or -std=c++0x
       -Wall
+      -march=native
        )
 
 include_directories(sdsl/include gflags/include
@@ -37,6 +38,7 @@ target_link_libraries(count_test
   gtest
   gtest_main
   pthread
+  sdsl
   )
 
 add_custom_command(TARGET count_test POST_BUILD

@@ -17,14 +17,25 @@ class SuffixArray {
   Index lcp(Index i) const {
     return lcp_[i];
   }
+
   Index sa(Index i) const {
     return sa_[i];
   }
+
   const char* text() const {
     return text_.data();
   }
+
   Index size() const {
     return text_.size() - 1;
+  }
+  
+  const Index* sa_data() const {
+    return &sa_[0];
+  }
+
+  const Index* lcp_data() const {
+    return &lcp_[0];
   }
  private:
   int compare(const std::string& pattern, Index p) const;

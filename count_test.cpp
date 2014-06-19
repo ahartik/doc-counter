@@ -5,6 +5,7 @@
 #include "wavelet/rle-wavelet.h"
 #include "ilcp.h"
 #include "brute.h"
+#include "sada_count.h"
 
 template<typename T>
 class CountTest : public ::testing::Test {
@@ -12,32 +13,44 @@ class CountTest : public ::testing::Test {
 };
 
 typedef ::testing::Types<
-  BalancedWavelet<>,
-  SkewedWavelet<>,
-  RLEWavelet<BalancedWavelet<>>,
-  RLEWavelet<SkewedWavelet<>>,
-  BalancedWavelet<RRRBitVector>,
-  SkewedWavelet<RRRBitVector>,
-  RLEWavelet<BalancedWavelet<RRRBitVector>>,
-  RLEWavelet<SkewedWavelet<RRRBitVector>>
-  > WaveletTypes;
+  ILCP<BalancedWavelet<>>,
+  ILCP<SkewedWavelet<>>,
+  ILCP<RLEWavelet<BalancedWavelet<>>>,
+  ILCP<RLEWavelet<SkewedWavelet<>>>,
+  ILCP<BalancedWavelet<RRRBitVector>>,
+  ILCP<SkewedWavelet<RRRBitVector>>,
+  ILCP<RLEWavelet<BalancedWavelet<RRRBitVector>>>,
+  ILCP<RLEWavelet<SkewedWavelet<RRRBitVector>>>,
+  SadaCount<FastBitVector>,
+  SadaCount<RRRBitVector>
+  > CountTypes;
 
-TYPED_TEST_CASE(CountTest, WaveletTypes );
+TYPED_TEST_CASE(CountTest, CountTypes );
 
 TYPED_TEST(CountTest, Simple) {
   std::string text = "antero\001ananas\001banana";
   SuffixArray sa(text.c_str(), text.size());
-  ILCP<TypeParam> ilcp(sa);
-  EXPECT_EQ(ilcp.count(sa, "an"), 3);
-  EXPECT_EQ(ilcp.count(sa, "b"), 1);
-  EXPECT_EQ(ilcp.count(sa, "tero"), 1);
-  EXPECT_EQ(ilcp.count(sa, "ana"), 2);
+  TypeParam counter(sa);
+  EXPECT_EQ(counter.count(sa, "an"), 3);
+  EXPECT_EQ(counter.count(sa, "b"), 1);
+  EXPECT_EQ(counter.count(sa, "tero"), 1);
+  EXPECT_EQ(counter.count(sa, "ana"), 2);
 }
 
 TEST(CountTest, Brute) {
   std::string text = "antero\001ananas\001banana";
   SuffixArray sa(text.c_str(), text.size());
   BruteCount c(sa);
+  EXPECT_EQ(c.count(sa, "an"), 3);
+  EXPECT_EQ(c.count(sa, "b"), 1);
+  EXPECT_EQ(c.count(sa, "tero"), 1);
+  EXPECT_EQ(c.count(sa, "ana"), 2);
+}
+
+TEST(CountTest, SadaCount) {
+  std::string text = "antero\001ananas\001banana";
+  SuffixArray sa(text.c_str(), text.size());
+  SadaCount<> c(sa);
   EXPECT_EQ(c.count(sa, "an"), 3);
   EXPECT_EQ(c.count(sa, "b"), 1);
   EXPECT_EQ(c.count(sa, "tero"), 1);
@@ -55,7 +68,7 @@ TYPED_TEST(CountTest, CompareToBrute) {
       "dog\001"
       "dublin\001";
   SuffixArray sa(text.c_str(), text.size());
-  ILCP<TypeParam> ilcp(sa);
+  TypeParam counter(sa);
   BruteCount brute(sa);
   // test for each short substring
   for (int len = 1; len <= 4; ++ len) {
@@ -63,7 +76,7 @@ TYPED_TEST(CountTest, CompareToBrute) {
       std::string pattern = text.substr(i, len);
       if (pattern.find("\001") != std::string::npos) continue;
       EXPECT_EQ(brute.count(sa, pattern),
-                ilcp.count(sa, pattern))
+                counter.count(sa, pattern))
           << "pattern = " << pattern << "\n";
     }
   }

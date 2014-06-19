@@ -16,11 +16,12 @@
 
 #include "ilcp.h"
 #include "brute.h"
+#include "sada_count.h"
 
 DEFINE_string(structures, "balanced",
               "Comma-separated list of tested structures. Available structures"
               ": brute,balanced,skewed,rle,rle_skewed,balanced_rrr,skewed_rrr,"
-              "rle_rrr,rle_skewed_rrr"
+              "rle_rrr,rle_skewed_rrr,sada,sada_rrr"
               );
 
 DEFINE_string(pattern_file, "",
@@ -142,6 +143,9 @@ int main(int argc, char** argv) {
       RLEWavelet<BalancedWavelet<RRRBitVector>>>>;
   structFuncs["rle_skewed_rrr"] = &countPatterns<ILCP<
       RLEWavelet<SkewedWavelet<RRRBitVector>>>>;
+
+  structFuncs["sada"] = &countPatterns<SadaCount<FastBitVector>>;
+  structFuncs["sada_rrr"] = &countPatterns<SadaCount<RRRBitVector>>;
   
   for (const std::string& s : split(FLAGS_structures, ',')) {
     if (structFuncs.count(s)) {

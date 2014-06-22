@@ -6,6 +6,7 @@
 #include "ilcp.h"
 #include "brute.h"
 #include "sada_count.h"
+#include "sada_sparse_count.h"
 
 template<typename T>
 class CountTest : public ::testing::Test {
@@ -22,7 +23,8 @@ typedef ::testing::Types<
   ILCP<RLEWavelet<BalancedWavelet<RRRBitVector>>>,
   ILCP<RLEWavelet<SkewedWavelet<RRRBitVector>>>,
   SadaCount<FastBitVector>,
-  SadaCount<RRRBitVector>
+  SadaCount<RRRBitVector>,
+  SadaSparseCount
   > CountTypes;
 
 TYPED_TEST_CASE(CountTest, CountTypes );

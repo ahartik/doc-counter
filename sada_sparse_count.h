@@ -5,12 +5,11 @@
 #include "rmq.h"
 #include <vector>
 
-template<typename BitVector = FastBitVector>
-class SadaCount {
+class SadaSparseCount {
  public:
   typedef SuffixArray::Index Index;
   typedef SuffixArray::SuffixRange SuffixRange;
-  SadaCount(const SuffixArray& sa) {
+  SadaSparseCount(const SuffixArray& sa) {
     using std::vector;
     vector<Index> ends;
     const unsigned char* text =
@@ -36,28 +35,26 @@ class SadaCount {
         prev[d] = i;
       }
     }
-    int bit_count = 0;
-    std::vector<bool> bv(2 * sa.size());
-    int ff[10] ={};
-    int total = 0;
+    vector<int> count_pos;
     for (int i = 0; i < counts.size(); ++i) {
-      int c = counts[i];
-      if (c < 10) ff[c]++;
-      for (int j = 0; j < counts[i]; ++j) bv[bit_count++] = 0;
-      bv[bit_count++] = 1;
+      if (counts[i] != 0) count_pos.push_back(i);
     }
-    bv.resize(bit_count+1);
-    for (int x : ff) {
-      std::cout << (x / double(counts.size()) )<< ' '; 
+    pos_ = SparseBitVector(count_pos.begin(),
+                           count_pos.end());
+
+    int c = 0;
+    for (int i = 0; i < count_pos.size(); ++i) {
+      c += counts[count_pos[i]];
+      count_pos[i] = c;
     }
-    std::cout << '\n';
-    bv_ = BitVector(bv);
+    count_ = SparseBitVector(count_pos.begin(),
+                             count_pos.end());
   }
 
   size_t count(const SuffixRange& range, const std::string& pattern) const {
     if (range.first == range.second) return 0;
-    size_t a = bv_.select(range.first + 1, 1) - range.first;
-    size_t b = bv_.select(range.second, 1) - range.second +1;
+    size_t a = scount(range.first + 1);
+    size_t b = scount(range.second);
     size_t dup = b - a;
     size_t len = range.second - range.first;
     return len - dup;
@@ -69,9 +66,19 @@ class SadaCount {
   }
 
   size_t byteSize() const {
-    return bv_.bitSize() / 8 + 1;
+    return (pos_.bitSize() + count_.bitSize()) / 8 + 1;
   }
 
  private:
-  BitVector bv_;
+  int scount(int i) const {
+    // How many counts?
+    int c = pos_.rank(i, 1);
+    // What is the total?
+    int r = count_.select(c, 1);
+    // Fix end:
+    return r;
+  }
+
+  SparseBitVector pos_;
+  SparseBitVector count_;
 };

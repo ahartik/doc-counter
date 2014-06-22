@@ -17,6 +17,7 @@
 #include "ilcp.h"
 #include "brute.h"
 #include "sada_count.h"
+#include "sada_sparse_count.h"
 
 DEFINE_string(structures, "balanced",
               "Comma-separated list of tested structures. Available structures"
@@ -146,6 +147,7 @@ int main(int argc, char** argv) {
 
   structFuncs["sada"] = &countPatterns<SadaCount<FastBitVector>>;
   structFuncs["sada_rrr"] = &countPatterns<SadaCount<RRRBitVector>>;
+  structFuncs["sada_sparse"] = &countPatterns<SadaSparseCount>;
   
   for (const std::string& s : split(FLAGS_structures, ',')) {
     if (structFuncs.count(s)) {

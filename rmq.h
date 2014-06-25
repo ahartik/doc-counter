@@ -17,7 +17,6 @@ class RMQSupport {
     tree_[0] = -1;
     // build tree
     size_t base = 1 << (depth_ - loglog);
-    std::cout<< "tree.size() = " << tree_.size() << "\n";
     
     for (size_t i = 0; i < n / skip; ++i) {
       int x = i * skip;
@@ -34,9 +33,6 @@ class RMQSupport {
       tree_[base + i] = x;
     }
 
-    // if (n % 2 == 1) {
-    //   tree_[base + n / 2] = n - 1;
-    // }
     for (size_t i = base-1; i > 0; --i) {
       tree_[i] = std::min(tree_[i * 2], tree_[i * 2 + 1]);
       if (arr[tree_[i * 2]] < arr[tree_[i * 2 + 1]]) {

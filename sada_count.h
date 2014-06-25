@@ -38,19 +38,11 @@ class SadaCount {
     }
     int bit_count = 0;
     std::vector<bool> bv(2 * sa.size());
-    int ff[10] ={};
-    int total = 0;
-    for (int i = 0; i < counts.size(); ++i) {
-      int c = counts[i];
-      if (c < 10) ff[c]++;
+    for (size_t i = 0; i < counts.size(); ++i) {
       for (int j = 0; j < counts[i]; ++j) bv[bit_count++] = 0;
       bv[bit_count++] = 1;
     }
     bv.resize(bit_count+1);
-    for (int x : ff) {
-      std::cout << (x / double(counts.size()) )<< ' '; 
-    }
-    std::cout << '\n';
     bv_ = BitVector(bv);
   }
 

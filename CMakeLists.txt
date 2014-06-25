@@ -3,7 +3,10 @@ cmake_minimum_required(VERSION 2.6.0)
 ## Project information ##
 project(ilcp_count CXX C)
 ADD_DEFINITIONS(
+      # -O0
       -g
+      -O3
+      -DNDEBUG
       -std=c++0x # Or -std=c++0x
       -Wall
       -march=native

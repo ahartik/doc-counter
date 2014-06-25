@@ -16,7 +16,7 @@ class BruteCount {
     const char* text = sa.text();
     for (Index i = 0; i <= sa.size(); ++i) {
       dn[i] = d;
-      if (text[i] <= 1) {
+      if ((unsigned char)text[i] <= 1) {
         d++;
       }
     }

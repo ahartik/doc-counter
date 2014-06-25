@@ -4,6 +4,7 @@
 #include "wavelet/sparse-bit-vector.h"
 #include "rmq.h"
 #include <vector>
+#include <unordered_map>
 
 class SadaSparseCount {
  public:
@@ -23,7 +24,8 @@ class SadaSparseCount {
     RMQSupport<Index> lcp_rmq(sa.lcp_data(), sa.size());
 
     vector<int> prev(ends.size() + 1, -1);
-    vector<int> counts(sa.size(), 0);
+
+    std::unordered_map<int, int> counts;
     for (int i = 0; i < sa.size(); ++i) {
       int d = da.rank(sa.sa(i), 1);
       assert(d < lens.size() || i == 0);
@@ -36,14 +38,24 @@ class SadaSparseCount {
       }
     }
     vector<int> count_pos;
-    for (int i = 0; i < counts.size(); ++i) {
-      if (counts[i] != 0) count_pos.push_back(i);
+    vector<int> one_pos;
+    count_pos.reserve(counts.size());
+    for (auto p : counts) {
+      if (p.second == 1) {
+        one_pos.push_back(p.first);
+      } else {
+        count_pos.push_back(p.first);
+      }
     }
+    std::sort(count_pos.begin(), count_pos.end());
+    std::sort(one_pos.begin(), one_pos.end());
     pos_ = SparseBitVector(count_pos.begin(),
                            count_pos.end());
 
+    one_ = SparseBitVector(one_pos.begin(), one_pos.end());
+ 
     int c = 0;
-    for (int i = 0; i < count_pos.size(); ++i) {
+    for (size_t i = 0; i < count_pos.size(); ++i) {
       c += counts[count_pos[i]];
       count_pos[i] = c;
     }
@@ -75,10 +87,15 @@ class SadaSparseCount {
     int c = pos_.rank(i, 1);
     // What is the total?
     int r = count_.select(c, 1);
-    // Fix end:
+    // Add ones:
+    r += one_.rank(i, 1);
     return r;
   }
 
+  // one_[i] == 1 <=> count[i] == 1
+  SparseBitVector one_;
+  // pos_[i] == 1 <=> count[i] > 1
   SparseBitVector pos_;
+  // unary encoding of count values.
   SparseBitVector count_;
 };

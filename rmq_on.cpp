@@ -26,22 +26,18 @@ struct ArrWrap {
   const T* arr_;
 };
 
-static int intlog2(uint64_t x) {
-  return 63 - __builtin_clzll(x);
-}
-
 // Solution in <O(n log n), O(1)>
 template<typename T, typename Func = ArrWrap<T>>
 class FastRMQ {
  public:
   FastRMQ(Func arr, size_t n) : arr_(arr) {
-    m.resize(1 + intlog2(n-1));
+    m.resize(1 + log2(n-1));
     for (size_t w = 0; w < m.size(); ++w) {
       m[w].resize(n);
       m[w][0] = 0;
     }
     for (size_t i = 1; i < n; ++i) {
-      if (arr(i) <= arr(i-1)) {
+      if (arr(i) < arr(i-1)) {
         m[0][i] = i;
       } else {
         m[0][i] = i - 1;
@@ -65,7 +61,7 @@ class FastRMQ {
     if (begin + 2 == end) {
       return m[0][end-1];
     }
-    int w = intlog2(end - begin - 1);
+    int w = log2(end - begin - 1);
     assert(begin + (1<<w) < end);
     assert(begin + (2<<w) >= end);
 
@@ -86,21 +82,19 @@ class RMQ {
   typedef std::function<const T&(size_t i)> FuncWrap;
  public:
   RMQ(Func arr, size_t n, int depth = 1) 
-      : size_(n),
-        arr_(arr),
+      : arr_(arr),
+        size_(n),
         small_rmq_(1)
   {
-    bs_ = (1 + intlog2(n-1)) / 4;
-    if (n <= 1 || bs_ <= 1) {
+    bs_ = (1 + log2(n-1)) / 4;
+    size_t num_blocks = 1 + (n-1) / bs_;
+    small_rmq_ = SmallRMQ(bs_);
+    std::cout << "bs = " << bs_ << "\n";
+    std::cout << "num_blocks = " << num_blocks << "\n";
+    if (bs_ <= 1 || num_blocks <= 1) {
       bs_ = 0;
     } else {
-      size_t num_blocks = 1 + (n-1) / bs_;
-      std::cout << "bs = " << bs_ << " n = " << n << "\n";
-      std::cout << "num_blocks = " << num_blocks << "\n";
-
-      small_rmq_ = SmallRMQ(bs_);
-
-      block_min_ = IntArray(1 + intlog2(bs_ - 1), num_blocks);
+      block_min_ = IntArray(1 + log2(bs_ - 1), num_blocks);
       block_id_ = IntArray(2 * bs_, num_blocks);
       for (size_t i = 0; i < num_blocks; ++i) {
         size_t m = 0;
@@ -115,13 +109,11 @@ class RMQ {
         block_id_.set(i, block_id);
       } 
       using namespace std::placeholders;
+      // FuncWrap block_func =
+      //     std::bind(&RMQ<T,Func>::GetBlockMin, this, _1);
       BlockFunc block_func {this};
-      if (depth == 0) {
-        block_fast_.reset(new FastRMQ<T, BlockFunc>(block_func, num_blocks));
-      } else {
-        FuncWrap wrapped = block_func;
-        block_rec_.reset(new RMQ<T, FuncWrap>(wrapped, num_blocks, depth-1));
-      }
+      // block_rmq_.reset(new FastRMQ<T, FuncWrap>(block_func, num_blocks));
+      block_rmq_.reset(new FastRMQ<T, BlockFunc>(block_func, num_blocks));
     }
   }
   size_t rmq(size_t begin, size_t end) const {
@@ -135,16 +127,13 @@ class RMQ {
       return brute_rmq(begin, end);
     }
     if (start_block < end_block) {
-      size_t min_block = blockRMQ(start_block, end_block);
+      size_t min_block = block_rmq_->rmq(start_block, end_block);
       size_t middle_min = min_block * bs_ + block_min_.get(min_block);
       ret = middle_min;
     }
-    assert(begin <= start_block * bs_);
-    assert(end >= end_block * bs_);
-
     if (begin != start_block * bs_) {
       size_t start_min = brute_rmq(begin, start_block * bs_);
-      if (arr_(start_min) <= arr_(ret))
+      if (arr_(start_min) < arr_(ret))
         ret = start_min;
     }
     if (end != end_block * bs_) {
@@ -173,7 +162,7 @@ class RMQ {
   }
 
   const T& blockMin(size_t i) const {
-    size_t block_start = bs_ * i;
+    size_t block_start = bs_ * (i / bs_);
     return arr_(block_start + block_min_.get(i));
   }
 
@@ -183,23 +172,50 @@ class RMQ {
       return rmq->blockMin(i);
     }
   };
-  size_t blockRMQ(size_t begin, size_t end) const {
-    if (block_rec_ != nullptr) {
-      return block_rec_->rmq(begin, end);
-    } else {
-      return block_fast_->rmq(begin, end);
-    }
-  }
-
-  size_t bs_;
-  size_t size_;
 
   IntArray block_min_;
   Func arr_;
-  std::unique_ptr<RMQ<T, FuncWrap>> block_rec_;
-  std::unique_ptr<FastRMQ<T, BlockFunc>> block_fast_;
+  // std::unique_ptr<RMQ<T, FuncWrap>> block_rmq_;
+  std::unique_ptr<FastRMQ<T, BlockFunc>> block_rmq_;
 
   SmallRMQ small_rmq_;
   IntArray block_id_;
 
+  size_t size_;
+  size_t bs_;
 };
+
+const int arrsize = 1000 * 1000 * 100;
+int arr[arrsize];
+
+int main() {
+  for (int i = 0; i < arrsize; ++i)
+    arr[i] = i;
+
+  using namespace std::chrono;
+  std::chrono::high_resolution_clock clock;
+  auto cons_start = clock.now();
+  std::cout << "construction: " << std::flush;
+  RMQ<int> rmq(arr, arrsize);
+  FastRMQ<int> fast_rmq(arr, arrsize);
+  auto cons_end = clock.now();
+  std::cout << duration_cast<milliseconds>(cons_end-cons_start).count() << "ms\n";
+  size_t count = 10000;
+  size_t checksum = 0;
+  for (int i = 0; i < count; ++i) {
+    int l = rand() % arrsize;
+    int r = l + 1 + rand() % (arrsize - l);
+    int mp = rmq.rmq(l,r);
+    checksum += mp + checksum << 1;
+//     int real_min = std::min_element(arr + l, arr + r) - arr;
+//     int fast_min = fast_rmq.rmq(l,r);
+//     if (arr[mp] != arr[fast_min]) {
+//       std::cout << "From " << l << " to " << r << "\n";
+//       std::cout << "Error: " << "rmq = " << arr[mp] << " fast = " << arr[fast_min] << "\n";
+//       std::cout << "Error: " << "rmq_pos = " << mp << "\n";
+// }
+  }
+  auto rmq_end = clock.now();
+  std::cout << duration_cast<nanoseconds>(rmq_end-cons_end).count() / count << "ns/rmq\n";
+  std::cout << "CHECK: " << checksum << "\n";
+}

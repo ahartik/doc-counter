@@ -21,7 +21,7 @@ class SadaCount {
       }
     }
     SparseBitVector da(ends.begin(), ends.end());
-    RMQSupport<Index> lcp_rmq(sa.lcp_data(), sa.size());
+    RMQ<Index> lcp_rmq(sa.lcp_data(), sa.size());
 
     vector<int> prev(ends.size() + 1, -1);
     vector<int> counts(sa.size(), 0);
@@ -31,7 +31,7 @@ class SadaCount {
       if (prev[d] == -1) {
         prev[d] = i;
       } else {
-        int r = lcp_rmq.rmq_pos(prev[d]+1, i+1);
+        int r = lcp_rmq.rmq(prev[d]+1, i+1);
         counts[r]++;
         prev[d] = i;
       }

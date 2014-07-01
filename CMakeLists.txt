@@ -6,7 +6,7 @@ ADD_DEFINITIONS(
       # -O0
       -g
       -O3
-      -DNDEBUG
+    # -DNDEBUG
       -std=c++0x # Or -std=c++0x
       -Wall
       -march=native

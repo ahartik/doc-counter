@@ -6,6 +6,7 @@
 #include <vector>
 #include <unordered_map>
 
+template<bool OneOpt = true>
 class SadaSparseCount {
  public:
   typedef SuffixArray::Index Index;
@@ -21,7 +22,7 @@ class SadaSparseCount {
       }
     }
     SparseBitVector da(ends.begin(), ends.end());
-    RMQSupport<Index> lcp_rmq(sa.lcp_data(), sa.size());
+    RMQ<Index> lcp_rmq(sa.lcp_data(), sa.size());
 
     vector<int> prev(ends.size() + 1, -1);
 
@@ -32,21 +33,31 @@ class SadaSparseCount {
       if (prev[d] == -1) {
         prev[d] = i;
       } else {
-        int r = lcp_rmq.rmq_pos(prev[d]+1, i+1);
+        int r = lcp_rmq.rmq(prev[d]+1, i+1);
+#if 0
+        // Experiment to only have one position for every "real" internal node.
+        // Improves size a bit when not using OneOpt.
+        {
+          int lc = sa.lcp(r);
+          while (r > 0 && sa.lcp(r-1) == lc) r--;
+        }
+#endif
         counts[r]++;
         prev[d] = i;
       }
     }
+
     vector<int> count_pos;
     vector<int> one_pos;
     count_pos.reserve(counts.size());
     for (auto p : counts) {
-      if (p.second == 1) {
+      if (p.second == 1 && OneOpt) {
         one_pos.push_back(p.first);
       } else {
         count_pos.push_back(p.first);
       }
     }
+
     std::sort(count_pos.begin(), count_pos.end());
     std::sort(one_pos.begin(), one_pos.end());
     pos_ = SparseBitVector(count_pos.begin(),
@@ -87,8 +98,10 @@ class SadaSparseCount {
     int c = pos_.rank(i, 1);
     // What is the total?
     int r = count_.select(c, 1);
-    // Add ones:
-    r += one_.rank(i, 1);
+    if (OneOpt) {
+      // Add ones:
+      r += one_.rank(i, 1);
+    }
     return r;
   }
 

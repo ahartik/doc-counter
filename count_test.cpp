@@ -24,7 +24,8 @@ typedef ::testing::Types<
   ILCP<RLEWavelet<SkewedWavelet<RRRBitVector>>>,
   SadaCount<FastBitVector>,
   SadaCount<RRRBitVector>,
-  SadaSparseCount
+  SadaSparseCount<true>,
+  SadaSparseCount<false>
   > CountTypes;
 
 TYPED_TEST_CASE(CountTest, CountTypes );

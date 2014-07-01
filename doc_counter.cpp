@@ -46,31 +46,48 @@ bool readBinaryFile(const std::string& filename, std::vector<char> *contents) {
   return false;
 }
 
+const int kTotalCounts = 10000;
 
 template<typename Counter> 
 void countPatterns(const SuffixArray& sa,
                    const std::vector<std::string>& patterns) {
   using namespace std::chrono;
   std::vector<SuffixArray::SuffixRange> ranges;
+  std::chrono::high_resolution_clock clock;
+
   ranges.reserve(patterns.size());
-  for (const std::string& p : patterns) {
-    ranges.push_back(sa.locate(p));
+  {
+    auto start = clock.now();
+    for (const std::string& p : patterns) {
+      ranges.push_back(sa.locate(p));
+    }
+    auto end = clock.now();
+    std::cout << duration_cast<nanoseconds>(end-start).count()/patterns.size()<< "ns/locate\n";
   }
   Counter counter(sa);
   uint64_t checksum = 0;
-  std::chrono::high_resolution_clock clock;
+  std::vector<int> counts(patterns.size());
   auto start = clock.now();
-
-  for (size_t i = 0; i < patterns.size(); ++i) {
-    const std::string& p = patterns[i];
-    int c = counter.count(ranges[i], p);
-    if (FLAGS_print_counts) {
-      std::cout <<"\t" <<  p << ": " << c << "\n";
+  int cc = 0;
+  while (cc < kTotalCounts) {
+    for (size_t i = 0; i < patterns.size(); ++i) {
+      const std::string& p = patterns[i];
+      int c = counter.count(ranges[i], p);
+      counts[i] = c;
+      checksum = checksum * 31 + c;
+      cc ++;
     }
-    checksum = checksum * 31 + c;
   }
   auto end = clock.now();
-  std::cout << duration_cast<nanoseconds>(end-start).count()/patterns.size()<< "ns/count\n";
+  std::cout << duration_cast<nanoseconds>(end-start).count()/cc << "ns/count\n";
+  
+  if (FLAGS_print_counts) {
+    for (size_t i = 0; i < patterns.size(); ++i) {
+      const std::string& p = patterns[i];
+      int c = counts[i];
+      std::cout <<"\t" <<  p << ": " << c << "\n";
+    }
+  }
 
   std::cout << "size: " << counter.byteSize() << "\n";
   std::cout << "checksum: " << checksum << "\n";
@@ -147,7 +164,8 @@ int main(int argc, char** argv) {
 
   structFuncs["sada"] = &countPatterns<SadaCount<FastBitVector>>;
   structFuncs["sada_rrr"] = &countPatterns<SadaCount<RRRBitVector>>;
-  structFuncs["sada_sparse"] = &countPatterns<SadaSparseCount>;
+  structFuncs["sada_sparse"] = &countPatterns<SadaSparseCount<1>>;
+  structFuncs["sada_sparse_simpler"] = &countPatterns<SadaSparseCount<0>>;
   
   for (const std::string& s : split(FLAGS_structures, ',')) {
     if (structFuncs.count(s)) {

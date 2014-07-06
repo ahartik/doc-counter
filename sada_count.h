@@ -1,5 +1,6 @@
 #pragma once
 #include "suffix-array.h"
+#include "sparse-int-array.h"
 #include "wavelet/fast-bit-vector.h"
 #include "wavelet/sparse-bit-vector.h"
 #include "rmq.h"
@@ -24,7 +25,8 @@ class SadaCount {
     RMQ<Index> lcp_rmq(sa.lcp_data(), sa.size());
 
     vector<int> prev(ends.size() + 1, -1);
-    vector<int> counts(sa.size(), 0);
+    // vector<int> counts(sa.size(), 0);
+    SparseIntArray<int> counts(sa.size());
     for (int i = 0; i < sa.size(); ++i) {
       int d = da.rank(sa.sa(i), 1);
       assert(d < lens.size() || i == 0);
@@ -39,7 +41,7 @@ class SadaCount {
     int bit_count = 0;
     std::vector<bool> bv(2 * sa.size());
     for (size_t i = 0; i < counts.size(); ++i) {
-      for (int j = 0; j < counts[i]; ++j) bv[bit_count++] = 0;
+      for (int j = 0; j < counts.get(i); ++j) bv[bit_count++] = 0;
       bv[bit_count++] = 1;
     }
     bv.resize(bit_count+1);

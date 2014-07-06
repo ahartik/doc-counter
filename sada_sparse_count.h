@@ -1,10 +1,12 @@
 #pragma once
 #include "suffix-array.h"
+#include "sparse-int-array.h"
 #include "wavelet/fast-bit-vector.h"
 #include "wavelet/sparse-bit-vector.h"
 #include "rmq.h"
 #include <vector>
 #include <unordered_map>
+#include <map>
 
 template<bool OneOpt = true>
 class SadaSparseCount {
@@ -26,7 +28,9 @@ class SadaSparseCount {
 
     vector<int> prev(ends.size() + 1, -1);
 
-    std::unordered_map<int, int> counts;
+    SparseIntArray<int> counts(sa.size());
+    int one_count = 0;
+    int rest_count = 0;
     for (int i = 0; i < sa.size(); ++i) {
       int d = da.rank(sa.sa(i), 1);
       assert(d < lens.size() || i == 0);
@@ -42,21 +46,31 @@ class SadaSparseCount {
           while (r > 0 && sa.lcp(r-1) == lc) r--;
         }
 #endif
-        counts[r]++;
+        int c = counts[r]++;
+        if (c == 1) one_count++;
+        if (c == 2) {
+          one_count--;
+          rest_count ++;
+        }
         prev[d] = i;
       }
     }
 
     vector<int> count_pos;
     vector<int> one_pos;
-    count_pos.reserve(counts.size());
-    for (auto p : counts) {
-      if (p.second == 1 && OneOpt) {
-        one_pos.push_back(p.first);
+//    count_pos.reserve(rest_count);
+//    one_pos.reserve(one_count);
+    for (size_t i = 0; i < counts.size(); ++i) {
+      int c = counts.get(i);
+      if (c == 0) continue;
+      if (c == 1 && OneOpt) {
+        one_pos.push_back(i);
       } else {
-        count_pos.push_back(p.first);
+        count_pos.push_back(i);
       }
     }
+    assert(one_pos.size() == one_count);
+    assert(count_pos.size() == rest_count);
 
     std::sort(count_pos.begin(), count_pos.end());
     std::sort(one_pos.begin(), one_pos.end());

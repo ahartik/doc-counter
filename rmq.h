@@ -36,26 +36,30 @@ class FastRMQ {
  public:
   FastRMQ(Func arr, size_t n) : arr_(arr) {
     m.resize(1 + intlog2(n-1));
+    size_t size = 0;
     for (size_t w = 0; w < m.size(); ++w) {
-      m[w].resize(n);
-      m[w][0] = 0;
+      m[w] = IntArray(w + 1, n);
+      size += m[w].byteSize();
+      m[w].set(0,0);
     }
+    std::cout << (size) << " B for FastRMQ\n";
     for (size_t i = 1; i < n; ++i) {
-      if (arr(i) <= arr(i-1)) {
-        m[0][i] = i;
+      if (arr(i) < arr(i-1)) {
+        m[0].set(i, 0);
       } else {
-        m[0][i] = i - 1;
+        m[0].set(i, 1);
       }
     }
     for (size_t w = 1; w < m.size(); ++w) {
       int span = 1 << w;
       for (size_t i = 0; i < n; ++i) {
-        int a = m[w-1][i];
-        int b = m[w-1][std::max<int>(i - span, 0)];
+        int a = i - m[w-1].get(i);
+        int bi = std::max<int>(i - span, 0);
+        int b = bi - m[w-1].get(bi);
         if (arr(a) < arr(b)) {
-          m[w][i] = a;
+          m[w].set(i, i - a);
         } else {
-          m[w][i] = b;
+          m[w].set(i, i - b);
         }
       }
     }
@@ -63,21 +67,23 @@ class FastRMQ {
   size_t rmq(size_t begin, size_t end) const {
     if (begin + 1 >= end)return begin;
     if (begin + 2 == end) {
-      return m[0][end-1];
+      return end - 1 - m[0].get(end - 1);
     }
     int w = intlog2(end - begin - 1);
     assert(begin + (1<<w) < end);
     assert(begin + (2<<w) >= end);
 
-    int a = m[w-1][end - 1];
-    int b = m[w-1][begin + (1 << w) - 1];
+    int ai = end - 1;
+    int a = ai - m[w-1].get(ai);
+    int bi = begin + (1 << w) - 1;
+    int b = bi - m[w-1].get(bi);
 
     if (arr_(a) < arr_(b)) return a;
     else return b;
   }
  private:
   Func arr_;
-  std::vector<std::vector<int>> m;
+  std::vector<IntArray> m;
 };
 
 template<typename T, typename Func = ArrWrap<T>>
@@ -85,12 +91,12 @@ class RMQ {
  private:
   typedef std::function<const T&(size_t i)> FuncWrap;
  public:
-  RMQ(Func arr, size_t n, int depth = 1) 
+  RMQ(Func arr, size_t n, int depth = 2) 
       : size_(n),
         arr_(arr),
         small_rmq_(1)
   {
-    bs_ = (1 + intlog2(n-1)) / 4;
+    bs_ = (1 + intlog2(n-1)) / 3;
     if (n <= 1 || bs_ <= 1) {
       bs_ = 0;
     } else {

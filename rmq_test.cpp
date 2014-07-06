@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <algorithm>
 
-const int arrsize = 1000;
+const int arrsize = 10000;
 int arr[arrsize];
 
 template<typename RMQT>
@@ -28,7 +28,7 @@ void test(RMQT& rmq) {
 // int arrsize = sizeof(arr) / sizeof(int);
 int main() {
   for (int i = 0; i < arrsize; ++i)
-    arr[i] = rand()%100;
+    arr[i] = rand()%50;
 
   RMQ<int> rmq(arr, arrsize);
   std::cout << "RMQ<int>\n";

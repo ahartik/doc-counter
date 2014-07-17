@@ -103,7 +103,7 @@ class SadaSparseCount {
   }
 
   size_t byteSize() const {
-    return (pos_.bitSize() + count_.bitSize()) / 8 + 1;
+    return (pos_.bitSize() + count_.bitSize() + one_.bitSize()) / 8 + 3;
   }
 
  private:

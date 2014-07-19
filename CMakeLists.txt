@@ -32,6 +32,8 @@ target_link_libraries(suffix-array_test
   pthread
   )
 
+set(CMAKE_BUILD_TYPE "Debug")
+
 add_custom_command(TARGET suffix-array_test POST_BUILD
     COMMAND suffix-array_test || true)
 
